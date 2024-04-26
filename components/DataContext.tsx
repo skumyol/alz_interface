@@ -1,0 +1,4 @@
+// DataContext.tsx
+import React from 'react';
+
+export const DataContext = React.createContext(null);

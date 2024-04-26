@@ -17,7 +17,7 @@ function App() {
   return (
     <DataProvider>
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Record">
+      <Stack.Navigator initialRouteName="Welcome">
         <Stack.Screen name="Welcome" component={LandingPage} />
         <Stack.Screen name="Consent" component={ConsentForm} />
         <Stack.Screen name="Contact" component={ContactForm} />

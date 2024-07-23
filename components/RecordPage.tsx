@@ -19,24 +19,38 @@ export function RecordPage({ navigation }) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const startRecording = async () => {
-    setIsRecording(true);
-    await audioRecorderPlayer.startRecorder();
+    try {
+      if (!audioRecorderPlayer) {
+        throw new Error('AudioRecorderPlayer is not initialized.');
+      }
+      setIsRecording(true);
+      await audioRecorderPlayer.startRecorder();
+    } catch (error) {
+      console.error('Error starting recording: ', error);
+      setIsRecording(false);
+      // Optionally, show an alert or handle the error in another way
+    }
   };
 
   const stopRecording = async () => {
-    setIsRecording(false);
-    setIsProcessing(true);
-    if (!audioRecorderPlayer) {
-      console.error('AudioRecorderPlayer is not initialized.');
-      return; // Early return to prevent calling stopRecorder on null
-    }
-    const path = await audioRecorderPlayer.stopRecorder();
-    audioRecorderPlayer.removeRecordBackListener();
-    if (!path) {
+    
+    try {
+      if (!audioRecorderPlayer) {
+        throw new Error('AudioRecorderPlayer is not initialized.');
+      }
+      setIsRecording(false);
+      setIsProcessing(true);
+      const path = await audioRecorderPlayer.stopRecorder();
+      audioRecorderPlayer.removeRecordBackListener();
+      if (!path) {
+        throw new Error('No recording found. Please try again.');
+      }
+      // Process the recording path as needed
+    } catch (error) {
+      console.error('Error stopping recording: ', error);
       setIsProcessing(false);
       setIsRecording(false);
-      Alert.alert("Error", "No recording found. Please try again.");
-      return; // Early return to prevent further execution
+      // Optionally, show an alert or handle the error in another way
     }
     
     let data = new FormData();
@@ -45,9 +59,9 @@ export function RecordPage({ navigation }) {
     data.append("email", email || uuidv4());
     data.append("agree", agree.toString());
     data.append("file", {
-      name: "test.mp3",
+      name: "test.wav",
       uri: path,
-      type: "audio/mp3",
+      type: "audio/wav",
     });
 
     const fetchPromise = fetch("http://sabre.lumilynx.co:5000/predict", {

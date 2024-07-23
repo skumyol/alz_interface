@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import { View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Dimensions, TouchableOpacity, Alert } from 'react-native';
+import { v4 as uuidv4 } from 'uuid';
+import { useData } from "./DataProvider";
 
 class ConsentForm extends Component {
   scrollViewRef = React.createRef();
@@ -8,6 +10,7 @@ class ConsentForm extends Component {
     accepted: false,
     scrollViewHeight: 0,
     contentHeight: 0,
+    uniqueValue: '',
   }
 
   componentDidMount() {
@@ -27,7 +30,21 @@ class ConsentForm extends Component {
       this.setState({ accepted: true });
     }
   }
-
+  handleAccept = () => {
+    Alert.alert(
+      "Confirmation",
+      "Do you agree to be contacted later?",
+      [
+        {
+          text: "No",
+          onPress: () => this.setState({ uniqueValue: uuidv4() }, // Assign a unique value
+          () => {this.props.navigation.navigate('Welcome')}),
+          style: "cancel",
+        },
+        { text: "Yes", onPress: () => this.props.navigation.navigate('Contact') } // Navigate on "Yes"
+      ]
+    );
+  }
   render() {
     const { navigation } = this.props;
     return (
@@ -61,10 +78,7 @@ class ConsentForm extends Component {
 
         <TouchableOpacity 
           disabled={!this.state.accepted} 
-          onPress={() => {
-            alert("New Terms and conditions accepted");
-            navigation.navigate('Contact'); // Navigate to the next screen
-          }} 
+          onPress={this.handleAccept} // Updated onPress handler
           style={this.state.accepted ? styles.button : styles.buttonDisabled}
         >
           <Text style={styles.buttonLabel}>Accept</Text>

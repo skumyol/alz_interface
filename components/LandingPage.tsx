@@ -9,7 +9,7 @@ export function LandingPage({navigation}) {
       </Text>
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('Consent')}>
+        onPress={() => navigation.navigate('Instructions')}>
         <Text style={styles.buttonText}>Start</Text>
       </TouchableOpacity>
     </View>

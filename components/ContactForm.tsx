@@ -1,39 +1,56 @@
-import React from 'react';
-import { View, TextInput, Button, Switch, Text } from 'react-native';
-import { useData } from './DataProvider';
+import React from "react";
+import { View, TextInput, Button, Switch, Text } from "react-native";
+import { useData } from "./DataProvider";
 
 
-export function ContactForm({ navigation} ) {
-   const { name, email, agree, setName, setEmail, setAgree } = useData();
-    const canGoNext = name !== '' && email !== '';
-
+export function ContactForm({ navigation }) {
+  const { name, email, agree, setName, setEmail, setAgree } = useData();
+  const canGoNext = name !== "" && email !== "";
+  const handleNextPress = () => {
+    // if (email === "") {
+    //   setEmail(uuidv4()); // Set email to a unique ID if it's empty
+    // }
+    navigation.navigate("Welcome");
+  };
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 16 }}>
+    <View style={{ flex: 1, justifyContent: "center", padding: 16 }}>
       <TextInput
-        style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 16 }}
-        onChangeText={text => setName(text)}
+        style={{
+          height: 40,
+          borderColor: "gray",
+          borderWidth: 1,
+          marginBottom: 16,
+        }}
+        onChangeText={(text) => setName(text)}
         value={name}
         placeholder="Name/Alias"
       />
       <TextInput
-        style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 16 }}
-        onChangeText={text => setEmail(text)}
+        style={{
+          height: 40,
+          borderColor: "gray",
+          borderWidth: 1,
+          marginBottom: 16,
+        }}
+        onChangeText={(text) => setEmail(text)}
         value={email}
         placeholder="Email Address"
         keyboardType="email-address"
       />
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+      {/* <View
+        style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}
+      >
         <Switch
           value={agree}
           onValueChange={setAgree}
           trackColor={{ false: "#767577", true: "#81b0ff" }}
         />
         <Text> I agree to be contacted later.</Text>
-      </View>
+      </View> */}
       <Button
         title="Next"
-        onPress={() => navigation.navigate('Instructions')}
-        disabled={!canGoNext}
+        onPress={handleNextPress}
+        disabled={canGoNext}
       />
     </View>
   );

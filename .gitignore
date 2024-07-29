@@ -35,3 +35,4 @@ yarn-error.*
 *.tsbuildinfo
 
 android
+%ProgramData%/Microsoft/Windows/UUS/State/_active.uusver

@@ -26,18 +26,16 @@ const sendEmptyPostRequest = async () => {
   try {
     const response = await fetch("http://sabre.lumilynx.co:5000/mode", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+ 
       body: JSON.stringify({}),
     });
     if (!response.ok) {
       throw new Error(`Server error: ${response.status}`);
     }
     const result = await response.json();
-    console.log("Empty POST request result:", result);
+    console.log("Empty POST request result1:", result);
   } catch (error) {
-    console.error("Error sending empty POST request:", error);
+    console.error("Error sending empty POST request1:", error);
   }
 };
 
@@ -81,7 +79,7 @@ export function RecordPage({ navigation }) {
   };
   const uploadAudio = async (uri) => {
     const formData = new FormData();
-    formData.append("file", {
+    formData.append("files", {
       uri,
       type: "audio/wav",
       name: "test.wav",
@@ -89,15 +87,13 @@ export function RecordPage({ navigation }) {
     formData.append("name", name);
     formData.append("email", email);
     formData.append("agree", agree);
+    formData.append("moca", "30");
 
     console.log(formData);
     try {
-      const fetchPromise = fetch("http://localhost:5001/predict", {
+      const fetchPromise = fetch("http://sabre.lumilynx.co:5000/predict", {
         method: "POST",
         body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
       });
 
       const timeoutPromise = new Promise((_, reject) =>

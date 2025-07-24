@@ -1,185 +1,150 @@
-# Alzheimer's Interface App
+# Alzheimer's Disease Detection App
 
-A React Native application built with Expo for Alzheimer's research and patient interaction. The app provides a multi-screen interface for consent forms, contact information, instructions, recording capabilities, and reporting.
+A modern React Native Expo application for Alzheimer's disease detection through voice analysis. This app provides a user-friendly interface for recording voice samples and analyzing them for cognitive assessment.
 
 ## Features
 
-- **Consent Form**: Patient consent management
-- **Landing Page**: Welcome interface
-- **Contact Form**: Contact information collection
-- **Instructions**: User guidance and instructions
-- **Recording Page**: Audio recording capabilities
-- **Report Page**: Data reporting and analysis
+- **Cross-Platform**: Runs on iOS, Android, and Web
+- **Bilingual Support**: English and Chinese (Traditional) interface
+- **Modern UI/UX**: Clean, accessible design with smooth animations
+- **Voice Recording**: High-quality audio recording for analysis
+- **Real-time Processing**: Server-side analysis with progress feedback
+- **Responsive Design**: Optimized for both mobile and web platforms
 
 ## Technology Stack
 
-- React Native 0.73.6
-- Expo ~50.0.19
-- React Navigation
-- React Native Paper
-- TypeScript
+- **Framework**: React Native with Expo SDK 52
+- **Navigation**: React Navigation 6
+- **UI Components**: Custom components with React Native Paper
+- **Styling**: Modern design system with gradients and shadows
+- **Audio**: Expo AV for cross-platform audio recording
+- **State Management**: React Context API
+- **TypeScript**: Full TypeScript support for type safety
 
-## Quick Start
+## Project Structure
 
-### Prerequisites
+```
+src/
+├── components/
+│   └── common/           # Reusable UI components
+├── contexts/             # React Context providers
+├── navigation/           # Navigation configuration
+├── screens/              # Main application screens
+└── theme/               # Design system (colors, typography, spacing)
+```
 
-- Node.js 18 or higher
-- Docker and Docker Compose (for containerized deployment)
-- Expo CLI (for local development)
+## Screens Flow
 
-### Local Development
+1. **ConsentForm** - Welcome screen with institutional logos
+2. **ContactForm** - User information collection
+3. **LandingPage** - Main dashboard with dev mode options
+4. **InstructionPage** - Recording instructions
+5. **RecordPage** - Voice recording interface
+6. **ReportPage** - Analysis results display
 
+## Installation
+
+1. Install dependencies:
 ```bash
-# Install dependencies
 npm install
+```
 
-# Start the development server
+2. Start the development server:
+```bash
 npm start
-
-# Run on specific platforms
-npm run android  # Android
-npm run ios      # iOS
-npm run web      # Web
 ```
 
-## Docker Deployment
-
-This application is Docker-ready with both development and production configurations.
-
-### Development with Docker
-
+3. Run on specific platforms:
 ```bash
-# Using docker-compose (recommended)
-docker-compose --profile dev up --build
-
-# Or using the convenience script
-./scripts/docker-dev.sh
-
-# Access the app at http://localhost:19000
+npm run ios     # iOS simulator
+npm run android # Android emulator
+npm run web     # Web browser
 ```
 
-### Production Deployment
+## Platform-Specific Features
 
-```bash
-# Using docker-compose (recommended)
-docker-compose --profile prod up --build -d
+### Mobile (iOS/Android)
+- Full audio recording functionality
+- Native UI components
+- Optimized performance
 
-# Or using the convenience script
-./scripts/docker-prod.sh
+### Web
+- Responsive design
+- Graceful degradation for audio recording
+- Clear messaging about mobile app requirements
 
-# Access the app at http://localhost
-```
+## Configuration
 
-### Manual Docker Commands
+The app includes several configuration options:
 
-#### Development
-```bash
-# Build development image
-docker build -t alz-interface:dev .
+- **Dev Mode**: Toggle for development/testing features
+- **Language**: Switch between English and Chinese
+- **Server Modes**: Different analysis modes for testing
 
-# Run development container
-docker run -p 19000:19000 -p 19001:19001 -p 19002:19002 alz-interface:dev
-```
+## API Integration
 
-#### Production
-```bash
-# Build production image
-docker build -f Dockerfile.prod -t alz-interface:prod .
-
-# Run production container
-docker run -p 80:80 alz-interface:prod
-```
-
-## Docker Configuration
-
-### Files Overview
-
-- `Dockerfile`: Development container configuration
-- `Dockerfile.prod`: Production container with Nginx
-- `docker-compose.yml`: Multi-environment orchestration
-- `.dockerignore`: Files excluded from Docker context
-- `nginx.conf`: Production web server configuration
-- `scripts/docker-dev.sh`: Development deployment script
-- `scripts/docker-prod.sh`: Production deployment script
-
-### Environment Variables
-
-- `NODE_ENV`: Set to 'development' or 'production'
-- `EXPO_DEVTOOLS_LISTEN_ADDRESS`: Set to '0.0.0.0' for Docker
-
-### Ports
-
-- **Development**: 19000 (Expo dev server), 19001 (dev tools), 19002 (Metro bundler)
-- **Production**: 80 (HTTP web server)
-
-## Production Deployment
-
-The production setup uses a multi-stage Docker build:
-
-1. **Builder stage**: Installs dependencies and builds the web version
-2. **Production stage**: Serves the built files with Nginx
-
-### Features
-
-- Optimized Nginx configuration
-- Client-side routing support
-- Static asset caching
-- Security headers
-- Minimal production image size
+The app connects to a backend service for voice analysis:
+- Endpoint: `http://ddbackup.lumilynx.co/predict`
+- Supports audio file upload and analysis
+- Returns cognitive assessment scores
 
 ## Development
 
-### Project Structure
+### Adding New Languages
 
+1. Update `src/contexts/LanguageContext.tsx`
+2. Add translations to the `translations` object
+3. Update the language toggle component
+
+### Customizing Themes
+
+Modify files in `src/theme/`:
+- `colors.ts` - Color palette
+- `typography.ts` - Font styles
+- `spacing.ts` - Layout spacing and shadows
+
+### Adding New Screens
+
+1. Create screen component in `src/screens/`
+2. Add to navigation in `src/navigation/AppNavigator.tsx`
+3. Update TypeScript types for navigation
+
+## Building for Production
+
+### Web Deployment
+```bash
+expo build:web
 ```
-├── App.js                 # Main application component
-├── components/            # React components
-│   ├── DataProvider.js    # Data context provider
-│   ├── LandingPage.js     # Welcome screen
-│   ├── ConsentForm.js     # Consent management
-│   ├── ContactForm.js     # Contact information
-│   ├── InstructionPage.js # User instructions
-│   ├── RecordPage.js      # Audio recording
-│   └── ReportPage.js      # Data reporting
-├── assets/                # Static assets
-├── package.json           # Dependencies and scripts
-└── Docker files           # Containerization config
+
+### Mobile App Stores
+```bash
+expo build:ios
+expo build:android
 ```
 
-### Adding New Features
+## Docker Support
 
-1. Create new components in the `components/` directory
-2. Add navigation routes in `App.js`
-3. Update dependencies in `package.json`
-4. Rebuild Docker images if needed
-
-## Troubleshooting
-
-### Common Issues
-
-- **Port conflicts**: Ensure ports 19000-19002 (dev) or 80 (prod) are available
-- **Permission issues**: Run `chmod +x scripts/*.sh` to make scripts executable
-- **Build failures**: Clear Docker cache with `docker system prune`
-
-### Logs
+The project includes Docker configuration for containerized deployment:
 
 ```bash
-# View container logs
-docker-compose logs alz-dev    # Development
-docker-compose logs alz-prod   # Production
+# Development
+docker-compose --profile dev up --build
 
-# Follow logs in real-time
-docker-compose logs -f alz-dev
+# Production
+docker-compose --profile prod up --build -d
 ```
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test with Docker
-5. Submit a pull request
+1. Follow the existing code style and patterns
+2. Ensure TypeScript types are properly defined
+3. Test on all target platforms (iOS, Android, Web)
+4. Update documentation for new features
 
 ## License
 
-This project is private and proprietary.
+This project is developed for HKUST Center of Aging research purposes.
+
+## Support
+
+For technical issues or questions, please refer to the development team or create an issue in the project repository.

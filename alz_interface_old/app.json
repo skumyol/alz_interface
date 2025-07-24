@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "alz",
+    "slug": "snack-1bf37c79-d6bd-42f2-b297-3c234aa205e4",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.alzdetect.alzdetect",
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "description": "interface",
+    "extra": {
+      "eas": {
+        "projectId": "8d30d14e-f0d0-4f53-bd8d-309bc2a97496"
+      }
+    }
+  }
+}

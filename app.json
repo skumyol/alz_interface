@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "alz",
-    "slug": "snack-1bf37c79-d6bd-42f2-b297-3c234aa205e4",
+    "name": "Alzheimer's Detection App",
+    "slug": "alz-interface",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,24 +15,22 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hkust.alzinterface"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.alzdetect.alzdetect",
-      "versionCode": 1
+      "package": "com.hkust.alzinterface"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
-    "description": "interface",
-    "extra": {
-      "eas": {
-        "projectId": "8d30d14e-f0d0-4f53-bd8d-309bc2a97496"
-      }
-    }
+    "plugins": [
+      "expo-av"
+    ]
   }
 }

@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Development service
+  alz-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "19000:19000"  # Expo dev server
+      - "19001:19001"  # Expo dev tools
+      - "19002:19002"  # Metro bundler
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+    profiles:
+      - dev
+
+  # Production service
+  alz-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    profiles:
+      - prod
+
+networks:
+  default:
+    driver: bridge

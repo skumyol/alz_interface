@@ -4,6 +4,13 @@ import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { useData } from "./DataProvider";
 
+// Helper function to check if user has scrolled to bottom
+const isCloseToBottom = (nativeEvent) => {
+  const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+  const paddingToBottom = 20;
+  return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+};
+
 class ConsentForm extends Component {
   scrollViewRef = React.createRef();
 
@@ -38,11 +45,17 @@ class ConsentForm extends Component {
       [
         {
           text: "No",
-          onPress: () => this.setState({ uniqueValue: uuidv4() }, // Assign a unique value
-          () => {this.props.navigation.navigate('Welcome')}),
+          onPress: () => {
+            this.setState({ uniqueValue: uuidv4() }, () => {
+              this.props.navigation.navigate('Welcome');
+            });
+          },
           style: "cancel",
         },
-        { text: "Yes", onPress: () => this.props.navigation.navigate('Contact') } // Navigate on "Yes"
+        { 
+          text: "Yes", 
+          onPress: () => this.props.navigation.navigate('Contact') 
+        }
       ]
     );
   }

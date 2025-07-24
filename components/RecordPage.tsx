@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
 // import AudioRecorderPlayer from "react-native-audio-recorder-player";
 import AudioRecord from "react-native-audio-record";
 
 import { useData } from "./DataProvider";
 import { v4 as uuidv4 } from "uuid";
+
 const options = {
   sampleRate: 44100, // default 44100
   channels: 1, // 1 or 2, default 1
@@ -19,8 +21,11 @@ const options = {
   audioSource: 6, // android only
   wavFile: "test.wav", // default 'audio.wav'
 };
-// const audioRecorderPlayer = new AudioRecorderPlayer();
-AudioRecord.init(options);
+
+// Only initialize AudioRecord on mobile platforms
+if (Platform.OS !== 'web') {
+  AudioRecord.init(options);
+}
 
 const sendEmptyPostRequest = async () => {
   try {
@@ -43,25 +48,44 @@ export function RecordPage({ navigation }) {
   const { name, email, agree } = useData();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  
   sendEmptyPostRequest();
+  
   const startRecording = async () => {
     try {
+      if (Platform.OS === 'web') {
+        Alert.alert(
+          "Web Platform",
+          "Audio recording is not supported on web browsers. Please use the mobile app for recording functionality.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+      
       if (!AudioRecord) {
-        throw new Error("AudioRecorderPlayer is not initialized.");
+        throw new Error("AudioRecord is not initialized.");
       }
       setIsRecording(true);
       AudioRecord.start();
     } catch (error) {
       console.error("Error starting recording: ", error);
       setIsRecording(false);
-      // Optionally, show an alert or handle the error in another way
     }
   };
 
   const stopRecording = async () => {
     try {
+      if (Platform.OS === 'web') {
+        Alert.alert(
+          "Web Platform",
+          "Audio recording is not supported on web browsers. Please use the mobile app for recording functionality.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+      
       if (!AudioRecord) {
-        throw new Error("AudioRecorderPlayer is not initialized.");
+        throw new Error("AudioRecord is not initialized.");
       }
       setIsRecording(false);
       setIsProcessing(true);
@@ -127,6 +151,15 @@ export function RecordPage({ navigation }) {
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      {Platform.OS === 'web' && (
+        <View style={{ padding: 20, marginBottom: 20, backgroundColor: '#fff3cd', borderRadius: 5 }}>
+          <Text style={{ textAlign: 'center', color: '#856404' }}>
+            Audio recording is not available on web browsers.{'\n'}
+            Please use the mobile app for full functionality.
+          </Text>
+        </View>
+      )}
+      
       {isProcessing ? (
         <View style={{ alignItems: "center" }}>
           <ActivityIndicator
@@ -139,6 +172,7 @@ export function RecordPage({ navigation }) {
       ) : (
         <TouchableOpacity
           onPress={isRecording ? stopRecording : startRecording}
+          style={{ opacity: Platform.OS === 'web' ? 0.5 : 1 }}
         >
           <Image
             source={

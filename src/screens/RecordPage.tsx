@@ -19,6 +19,11 @@ import { LanguageToggle } from '../components/common/LanguageToggle';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useData } from '../contexts/DataContext';
 import { colors, typography, spacing, borderRadius } from '../theme';
+import { 
+  WebAudioRecorder, 
+  isWebAudioRecordingSupported, 
+  requestMicrophonePermission 
+} from '../utils/webAudioRecorder';
 
 export const RecordPage: React.FC = () => {
   const navigation = useNavigation();
@@ -27,8 +32,10 @@ export const RecordPage: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [webRecording, setWebRecording] = useState<WebAudioRecorder | null>(null);
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [webAudioSupported, setWebAudioSupported] = useState(false);
 
   const instructions = [
     t('recordInstruction1'),
@@ -49,7 +56,16 @@ export const RecordPage: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      if (Platform.OS !== 'web') {
+      if (Platform.OS === 'web') {
+        // Check if web audio recording is supported
+        const supported = isWebAudioRecordingSupported();
+        setWebAudioSupported(supported);
+        
+        if (supported) {
+          // Request permission preemptively
+          await requestMicrophonePermission();
+        }
+      } else {
         const { status } = await Audio.requestPermissionsAsync();
         if (status !== 'granted') {
           Alert.alert('Permission Required', t('micPermissionRequired'));
@@ -60,11 +76,28 @@ export const RecordPage: React.FC = () => {
 
   const startRecording = async () => {
     if (Platform.OS === 'web') {
-      Alert.alert(
-        'Web Platform Limitation',
-        'Audio recording is not supported in web browsers. Please use the mobile app for full functionality.',
-        [{ text: 'OK' }]
-      );
+      if (!webAudioSupported) {
+        Alert.alert(
+          'Recording Not Supported',
+          'Your browser does not support audio recording. Please try using a modern browser like Chrome, Firefox, or Safari.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      try {
+        const webRec = new WebAudioRecorder();
+        setWebRecording(webRec);
+        setIsTimerRunning(true);
+        setTimer(0);
+        await webRec.start();
+        setIsRecording(true);
+        console.log('Web recording started');
+      } catch (error) {
+        console.error('Failed to start web recording:', error);
+        setIsTimerRunning(false);
+        Alert.alert('Error', 'Failed to start recording. Please check microphone permissions and try again.');
+      }
       return;
     }
 
@@ -96,6 +129,40 @@ export const RecordPage: React.FC = () => {
 
   const stopRecording = async () => {
     if (Platform.OS === 'web') {
+      if (!webRecording) {
+        console.error('No web recording in progress');
+        return;
+      }
+
+      try {
+        setIsRecording(false);
+        setIsTimerRunning(false);
+        setIsProcessing(true);
+        
+        const audioBlob = await webRecording.stop();
+        console.log('Web recording stopped');
+        
+        if (isDevMode) {
+          // In dev mode, just show a success message
+          setTimeout(() => {
+            setIsProcessing(false);
+            const result = t('noAbnormality');
+            navigation.navigate('Report' as never, { serverResponse: result });
+          }, 2000);
+        } else {
+          // Upload the audio for processing
+          await uploadWebAudio(audioBlob);
+        }
+        
+        // Cleanup
+        webRecording.cleanup();
+        setWebRecording(null);
+      } catch (error) {
+        console.error('Error stopping web recording:', error);
+        setIsProcessing(false);
+        setIsRecording(false);
+        Alert.alert('Error', 'Failed to stop recording. Please try again.');
+      }
       return;
     }
 
@@ -180,6 +247,66 @@ export const RecordPage: React.FC = () => {
     }
   };
 
+  const uploadWebAudio = async (audioBlob: Blob) => {
+    const formData = new FormData();
+    
+    // Create a file from the blob with appropriate extension based on mime type
+    const mimeType = audioBlob.type;
+    let fileName = 'recording.webm';
+    let fileType = 'audio/webm';
+    
+    if (mimeType.includes('wav')) {
+      fileName = 'recording.wav';
+      fileType = 'audio/wav';
+    } else if (mimeType.includes('ogg')) {
+      fileName = 'recording.ogg';
+      fileType = 'audio/ogg';
+    } else if (mimeType.includes('mp4')) {
+      fileName = 'recording.mp4';
+      fileType = 'audio/mp4';
+    }
+    
+    const file = new File([audioBlob], fileName, { type: fileType });
+    formData.append('file', file);
+    formData.append('name', name);
+    formData.append('email', email);
+    formData.append('agree', agree.toString());
+    formData.append('moca', '-1');
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        setIsProcessing(false);
+        setIsRecording(false);
+        Alert.alert('Error', t('serverTimeout'));
+      }, 25000);
+
+      const response = await fetch('http://ddbackup.lumilynx.co/predict', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const result = await response.json();
+      const prediction = result.predicted_MMSE;
+      console.log('Web recording prediction:', prediction);
+      console.log('Success:', result);
+      setIsProcessing(false);
+      navigation.navigate('Report' as never, { serverResponse: prediction });
+    } catch (error) {
+      console.error('Error uploading web audio:', error);
+      setIsProcessing(false);
+      setIsRecording(false);
+      Alert.alert('Error', 'Failed to process recording. Please try again.');
+    }
+  };
+
   const handleRecordPress = () => {
     if (isRecording) {
       stopRecording();
@@ -189,16 +316,16 @@ export const RecordPage: React.FC = () => {
   };
 
   const renderRecordButton = () => {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === 'web' && !webAudioSupported) {
       return (
         <View style={styles.webMessageContainer}>
           <View style={styles.webMessage}>
-            <Text style={styles.webMessageTitle}>Web Platform Notice</Text>
+            <Text style={styles.webMessageTitle}>Browser Not Supported</Text>
             <Text style={styles.webMessageText}>
-              Audio recording is not supported in web browsers. Please download and use the mobile app for full functionality.
+              Your browser does not support audio recording. Please try using Chrome, Firefox, or Safari for the best experience.
             </Text>
             <Text style={styles.webMessageTip}>
-              💡 Tip: You can install this app on your mobile device for the complete experience.
+              💡 Tip: Make sure to allow microphone permissions when prompted.
             </Text>
           </View>
           <TouchableOpacity

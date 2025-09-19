@@ -1,3 +1,5 @@
+import { getResponsiveFontSize } from './webStyles';
+
 export const typography = {
   // Font families
   fontFamily: {
@@ -6,18 +8,18 @@ export const typography = {
     bold: 'System',
   },
   
-  // Font sizes
+  // Font sizes - now responsive for web
   fontSize: {
-    xs: 12,
-    sm: 14,
-    base: 16,
-    lg: 18,
-    xl: 20,
-    '2xl': 24,
-    '3xl': 30,
-    '4xl': 36,
-    '5xl': 48,
-    '6xl': 60,
+    xs: getResponsiveFontSize(12),
+    sm: getResponsiveFontSize(14),
+    base: getResponsiveFontSize(16),
+    lg: getResponsiveFontSize(18),
+    xl: getResponsiveFontSize(20),
+    '2xl': getResponsiveFontSize(24),
+    '3xl': getResponsiveFontSize(30),
+    '4xl': getResponsiveFontSize(36),
+    '5xl': getResponsiveFontSize(48),
+    '6xl': getResponsiveFontSize(60),
   },
   
   // Line heights
@@ -29,10 +31,10 @@ export const typography = {
   
   // Font weights
   fontWeight: {
-    normal: '400',
-    medium: '500',
-    semibold: '600',
-    bold: '700',
+    normal: '400' as const,
+    medium: '500' as const,
+    semibold: '600' as const,
+    bold: '700' as const,
   },
   
   // Letter spacing

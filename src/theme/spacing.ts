@@ -1,14 +1,16 @@
+import { getResponsiveSpacing } from './webStyles';
+
 export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  '2xl': 48,
-  '3xl': 64,
-  '4xl': 80,
-  '5xl': 96,
-  '6xl': 128,
+  xs: getResponsiveSpacing(4),
+  sm: getResponsiveSpacing(8),
+  md: getResponsiveSpacing(16),
+  lg: getResponsiveSpacing(24),
+  xl: getResponsiveSpacing(32),
+  '2xl': getResponsiveSpacing(48),
+  '3xl': getResponsiveSpacing(64),
+  '4xl': getResponsiveSpacing(80),
+  '5xl': getResponsiveSpacing(96),
+  '6xl': getResponsiveSpacing(128),
 };
 
 export const borderRadius = {

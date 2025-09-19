@@ -46,7 +46,7 @@ eas build --platform all --profile development
 ```bash
 # 1. Build and deploy with Docker
 docker build -f Dockerfile.web -t alz-interface .
-docker run -p 80:80 alz-interface
+docker run -p 5000:80 alz-interface
 
 # 2. Or use docker-compose
 docker-compose -f docker-compose.demo.yml up -d
@@ -55,7 +55,7 @@ docker-compose -f docker-compose.demo.yml up -d
 ## 📱 How Users Access the Demo
 
 ### Web Access
-1. Share URL: `https://your-domain.com`
+1. Share URL: `https://skumyol.com`
 2. Users open in any browser
 3. Works on desktop, tablet, mobile
 4. Can add to home screen for app-like experience
@@ -102,6 +102,43 @@ EXPO_PUBLIC_APP_NAME=Alzheimer's Detection Demo
 1. Point domain to hosting service
 2. Configure SSL certificate
 3. Update CORS settings if needed
+
+### Nginx Reverse Proxy Setup
+For production deployment with nginx reverse proxy to port 5000:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+For HTTPS with SSL certificate:
+```nginx
+server {
+    listen 443 ssl;
+    server_name your-domain.com;
+    
+    ssl_certificate /path/to/your/cert.pem;
+    ssl_certificate_key /path/to/your/key.pem;
+    
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
 
 ## 📊 Analytics & Monitoring
 

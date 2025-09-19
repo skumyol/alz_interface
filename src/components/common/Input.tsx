@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TextInputProps } from 'react-native';
-import { colors, typography, spacing, borderRadius } from '../../theme';
+import { View, TextInput, Text, StyleSheet, TextInputProps, Platform } from 'react-native';
+import { colors, typography, spacing, borderRadius, webMobileStyles } from '../../theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -19,16 +19,29 @@ export const Input: React.FC<InputProps> = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
 
+  // Web-specific props to prevent zoom on mobile
+  const webProps = Platform.OS === 'web' ? {
+    style: [
+      styles.input,
+      isFocused && styles.inputFocused,
+      error && styles.inputError,
+      webMobileStyles.inputOptimization,
+      style,
+    ]
+  } : {
+    style: [
+      styles.input,
+      isFocused && styles.inputFocused,
+      error && styles.inputError,
+      style,
+    ]
+  };
+
   return (
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <TextInput
-        style={[
-          styles.input,
-          isFocused && styles.inputFocused,
-          error && styles.inputError,
-          style,
-        ]}
+        {...webProps}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholderTextColor={colors.textLight}

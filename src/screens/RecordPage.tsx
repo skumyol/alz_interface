@@ -11,8 +11,22 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Audio } from 'expo-av';
+// Conditional import for expo-linear-gradient to prevent web build issues
+let LinearGradient: any = View;
+try {
+  LinearGradient = require('expo-linear-gradient').LinearGradient;
+} catch (e) {
+  console.warn('expo-linear-gradient not available, using View fallback:', e);
+}
+// Conditional import for expo-av to prevent web build issues
+let Audio: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    Audio = require('expo-av').Audio;
+  } catch (e) {
+    console.warn('expo-av not available:', e);
+  }
+}
 import { Button } from '../components/common/Button';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { LanguageToggle } from '../components/common/LanguageToggle';
@@ -31,7 +45,7 @@ export const RecordPage: React.FC = () => {
   const { name, email, agree, isDevMode } = useData();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [recording, setRecording] = useState<any>(null);
   const [webRecording, setWebRecording] = useState<WebAudioRecorder | null>(null);
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -65,7 +79,7 @@ export const RecordPage: React.FC = () => {
           // Request permission preemptively
           await requestMicrophonePermission();
         }
-      } else {
+      } else if (Audio) {
         const { status } = await Audio.requestPermissionsAsync();
         if (status !== 'granted') {
           Alert.alert('Permission Required', t('micPermissionRequired'));
@@ -98,6 +112,11 @@ export const RecordPage: React.FC = () => {
         setIsTimerRunning(false);
         Alert.alert('Error', 'Failed to start recording. Please check microphone permissions and try again.');
       }
+      return;
+    }
+
+    if (!Audio) {
+      Alert.alert('Error', 'Audio recording not available on this platform.');
       return;
     }
 
@@ -364,8 +383,8 @@ export const RecordPage: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={[colors.background, colors.surfaceVariant]}
-      style={styles.container}
+      colors={LinearGradient === View ? [colors.background] : [colors.background, colors.surfaceVariant]}
+      style={[styles.container, LinearGradient === View && { backgroundColor: colors.background }]}
     >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>

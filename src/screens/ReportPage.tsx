@@ -8,7 +8,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
+// Conditional import for expo-linear-gradient to prevent web build issues
+let LinearGradient: any = View;
+try {
+  LinearGradient = require('expo-linear-gradient').LinearGradient;
+} catch (e) {
+  console.warn('expo-linear-gradient not available, using View fallback:', e);
+}
 import { Button } from '../components/common/Button';
 import { LanguageToggle } from '../components/common/LanguageToggle';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -28,11 +34,12 @@ export const ReportPage: React.FC = () => {
 
   const { serverResponse } = (route.params as RouteParams) || {};
 
-  const handleResetAndNavigate = () => {
+    const handleResetAndNavigate = () => {
     resetValues();
 
     // Reset server mode
-    const url = `http://ddbackup.lumilynx.co/reset`;
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+    const url = `${apiUrl}/reset`;
     fetch(url)
       .then(response => response.json())
       .then(data => {
@@ -42,11 +49,14 @@ export const ReportPage: React.FC = () => {
         console.error('Error resetting data:', error);
       });
 
-    navigation.navigate('Introduction' as never);
+    navigation.navigate('Welcome' as never);
   };
 
   const handleDisplayReport = () => {
     if (isDevMode) {
+      setDisplayContent(t('noAbnormality'));
+    } else if (serverResponse === 'timeout') {
+      // Show standard report for timeout cases
       setDisplayContent(t('noAbnormality'));
     } else {
       const responseNumber = Number(serverResponse);

@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Button } from '../components/common/Button';
 import { LanguageToggle } from '../components/common/LanguageToggle';
@@ -17,11 +16,20 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useData } from '../contexts/DataContext';
 import { colors, typography, spacing, borderRadius } from '../theme';
 
+
+// Conditional import for expo-linear-gradient to prevent web build issues
+let LinearGradient: any = View;
+try {
+  LinearGradient = require('expo-linear-gradient').LinearGradient;
+} catch (e) {
+  console.warn('expo-linear-gradient not available, using View fallback:', e);
+}
+
 export const LandingPage: React.FC = () => {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const { isDevMode, setIsDevMode } = useData();
-  const [mode, setMode] = useState('normal');
+  const [mode, setMode] = useState<string>('normal');
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([
     { label: 'Mode 1', value: 'reset' },
@@ -29,12 +37,14 @@ export const LandingPage: React.FC = () => {
     { label: 'Mode 3', value: 'alwaysmci' }
   ]);
 
-  const handleToggleSwitch = () => setIsDevMode(previousState => !previousState);
+  // Fixing the toggle logic
+  const handleToggleSwitch = () => setIsDevMode(!isDevMode);
 
   const handleModeChange = (newMode: string | null) => {
     if (newMode) {
       setMode(newMode);
-      const url = `http://ddbackup.lumilynx.co/${newMode}`;
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const url = `${apiUrl}/${newMode}`;
       fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -47,7 +57,16 @@ export const LandingPage: React.FC = () => {
   };
 
   const fetchCurrentMode = () => {
-    const url = `http://ddbackup.lumilynx.co/mode`;
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+    const url = `${apiUrl}/mode`;
+    
+    // Skip API call in development if API is not available
+    if (apiUrl === 'http://localhost:3000') {
+      console.log('Development mode: skipping API call');
+      setMode('normal');
+      return;
+    }
+    
     fetch(url)
       .then(response => response.json())
       .then(data => {
@@ -56,6 +75,7 @@ export const LandingPage: React.FC = () => {
       })
       .catch(error => {
         console.error('Error fetching current mode:', error);
+        setMode('normal'); // Fallback to normal mode
       });
   };
 

@@ -11,11 +11,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
+// Conditional import for expo-linear-gradient
+let LinearGradient: any = View;
+try {
+  LinearGradient = require('expo-linear-gradient').LinearGradient;
+} catch (e) {
+  console.warn('expo-linear-gradient not available, using View fallback:', e);
+}
 import { Button } from '../components/common/Button';
 import { LanguageToggle } from '../components/common/LanguageToggle';
 import { useLanguage } from '../contexts/LanguageContext';
-import { colors, typography, spacing, borderRadius } from '../theme';
+import { colors, typography, spacing, borderRadius, webMobileStyles, isMobileWeb } from '../theme';
 
 export const ConsentForm: React.FC = () => {
   const navigation = useNavigation();
@@ -64,8 +70,12 @@ export const ConsentForm: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={[colors.background, colors.surfaceVariant]}
-      style={styles.container}
+      colors={LinearGradient === View ? [colors.background] : [colors.background, colors.surfaceVariant]}
+      style={[
+        styles.container,
+        LinearGradient === View && { backgroundColor: colors.background },
+        Platform.OS === 'web' && isMobileWeb && webMobileStyles.mobileContainer
+      ]}
     >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
@@ -198,5 +208,10 @@ const styles = StyleSheet.create({
   buttonContainer: {
     alignItems: 'center',
     paddingBottom: spacing.lg,
+    ...(Platform.OS === 'web' && isMobileWeb && {
+      paddingBottom: Math.max(spacing.lg, 30), // Ensure enough bottom padding for mobile
+      paddingTop: spacing.lg,
+      marginTop: 'auto', // Push to bottom
+    }),
   },
 });

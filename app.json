@@ -26,14 +26,19 @@
       "package": "com.hkust.alzinterface"
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/icon.png",
       "bundler": "metro",
       "meta": {
         "viewport": "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
       }
     },
+    "developer": {
+      "tool": "expo-cli"
+    },
+    "devClient": {
+      "url": "http://localhost:5000"
+    },
     "plugins": [
-      "expo-av"
     ]
   }
 }

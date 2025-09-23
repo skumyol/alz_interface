@@ -8,11 +8,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Button } from '../components/common/Button';
 import { LanguageToggle } from '../components/common/LanguageToggle';
 import { useLanguage } from '../contexts/LanguageContext';
 import { colors, typography, spacing, borderRadius } from '../theme';
+
+// Conditional import for expo-linear-gradient to prevent web build issues
+let LinearGradient: any = View;
+try {
+  LinearGradient = require('expo-linear-gradient').LinearGradient;
+} catch (e) {
+  console.warn('expo-linear-gradient not available, using View fallback:', e);
+}
 
 export const InstructionPage: React.FC = () => {
   const navigation = useNavigation();

@@ -11,6 +11,7 @@ export class WebAudioRecorder implements WebAudioRecording {
   private recordingBlob: Blob | null = null;
   private recordingUrl: string | null = null;
   private stream: MediaStream | null = null;
+  private startTime: number = 0;
 
   async start(): Promise<void> {
     try {
@@ -32,26 +33,39 @@ export class WebAudioRecorder implements WebAudioRecording {
 
       this.mediaRecorder = new MediaRecorder(this.stream, options);
       
-      // Reset chunks
+      // Reset chunks and previous recordings
       this.audioChunks = [];
+      this.recordingBlob = null;
+      if (this.recordingUrl) {
+        URL.revokeObjectURL(this.recordingUrl);
+        this.recordingUrl = null;
+      }
       
       // Handle data available
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          console.log('Audio chunk received:', event.data.size, 'bytes');
           this.audioChunks.push(event.data);
         }
       };
 
       // Handle recording stop
       this.mediaRecorder.onstop = () => {
-        this.recordingBlob = new Blob(this.audioChunks, { 
-          type: this.getSupportedMimeType() 
-        });
-        this.recordingUrl = URL.createObjectURL(this.recordingBlob);
+        console.log('Recording stopped, chunks:', this.audioChunks.length);
+        if (this.audioChunks.length > 0) {
+          this.recordingBlob = new Blob(this.audioChunks, { 
+            type: this.getSupportedMimeType() 
+          });
+          this.recordingUrl = URL.createObjectURL(this.recordingBlob);
+          console.log('Blob created successfully:', this.recordingBlob.size, 'bytes');
+        } else {
+          console.warn('No audio chunks available for blob creation');
+        }
       };
 
-      // Start recording
-      this.mediaRecorder.start(1000); // Collect data every second
+      // Start recording with smaller timeslice for better data collection
+      this.startTime = Date.now();
+      this.mediaRecorder.start(100); // Collect data every 100ms instead of 1000ms
       
     } catch (error) {
       console.error('Error starting web recording:', error);
@@ -66,21 +80,62 @@ export class WebAudioRecorder implements WebAudioRecording {
         return;
       }
 
-      // Set up stop handler
-      this.mediaRecorder.onstop = () => {
+      if (this.mediaRecorder.state === 'inactive') {
         if (this.recordingBlob) {
           resolve(this.recordingBlob);
         } else {
           reject(new Error('Recording failed to generate blob'));
         }
+        return;
+      }
+
+      // Check minimum recording duration (at least 1 second)
+      const recordingDuration = Date.now() - this.startTime;
+      if (recordingDuration < 1000) {
+        console.warn('Recording duration too short:', recordingDuration, 'ms');
+      }
+
+      // Set up a one-time stop handler
+      const handleStop = () => {
+        // Give a small delay to ensure blob creation is complete
+        setTimeout(() => {
+          if (this.recordingBlob && this.recordingBlob.size > 0) {
+            console.log('Successfully created blob with size:', this.recordingBlob.size);
+            resolve(this.recordingBlob);
+          } else {
+            // Try to create blob from chunks if it doesn't exist
+            if (this.audioChunks.length > 0) {
+              console.log('Creating blob from', this.audioChunks.length, 'chunks');
+              this.recordingBlob = new Blob(this.audioChunks, { 
+                type: this.getSupportedMimeType() 
+              });
+              if (this.recordingBlob.size > 0) {
+                this.recordingUrl = URL.createObjectURL(this.recordingBlob);
+                console.log('Successfully created blob with size:', this.recordingBlob.size);
+                resolve(this.recordingBlob);
+              } else {
+                reject(new Error('Recording failed to generate blob - blob size is 0'));
+              }
+            } else {
+              reject(new Error('Recording failed to generate blob - no audio data'));
+            }
+          }
+        }, 200); // Increased delay
       };
 
+      // Remove any existing stop handler and add our new one
+      this.mediaRecorder.onstop = handleStop;
+
       // Stop recording
-      this.mediaRecorder.stop();
-      
-      // Stop media stream
-      if (this.stream) {
-        this.stream.getTracks().forEach(track => track.stop());
+      try {
+        this.mediaRecorder.stop();
+        
+        // Stop media stream
+        if (this.stream) {
+          this.stream.getTracks().forEach(track => track.stop());
+        }
+      } catch (error) {
+        reject(new Error('Failed to stop recording: ' + error));
       }
     });
   }
@@ -144,8 +199,10 @@ export class WebAudioRecorder implements WebAudioRecording {
 // Check if web audio recording is supported
 export const isWebAudioRecordingSupported = (): boolean => {
   return !!(
+    typeof navigator !== 'undefined' &&
     navigator.mediaDevices &&
-    navigator.mediaDevices.getUserMedia &&
+    typeof navigator.mediaDevices.getUserMedia === 'function' &&
+    typeof window !== 'undefined' &&
     window.MediaRecorder
   );
 };

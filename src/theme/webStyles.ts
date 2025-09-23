@@ -63,9 +63,14 @@ export const webMobileStyles = {
   
   // Container styles for better mobile layout
   mobileContainer: {
-    minHeight: '100vh',
+    minHeight: Platform.OS === 'web' ? '100vh' : '100vh',
     overflowX: 'hidden',
     position: 'relative' as const,
+    ...(Platform.OS === 'web' && {
+      display: 'flex',
+      flexDirection: 'column',
+      paddingBottom: 'env(safe-area-inset-bottom, 20px)',
+    }),
   },
   
   // Prevent zoom on inputs
@@ -90,7 +95,7 @@ export const injectWebStyles = () => {
       box-sizing: border-box;
     }
     
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       overflow-x: hidden;
@@ -99,12 +104,36 @@ export const injectWebStyles = () => {
       text-size-adjust: none;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      height: 100%;
+      /* Use dynamic viewport units for better mobile experience */
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
     }
     
     #root {
       width: 100%;
-      min-height: 100vh;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      height: 100%;
       position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Fix for mobile browsers viewport issues */
+    @supports (height: 100dvh) {
+      html, body, #root {
+        height: 100dvh;
+        min-height: 100dvh;
+      }
+    }
+    
+    /* Fallback for older browsers */
+    @supports not (height: 100dvh) {
+      html, body, #root {
+        height: 100vh;
+        min-height: 100vh;
+      }
     }
     
     /* Improve touch targets */
@@ -115,6 +144,8 @@ export const injectWebStyles = () => {
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
+      min-height: 44px; /* Apple's recommended minimum touch target */
+      min-width: 44px;
     }
     
     /* Prevent zoom on inputs for mobile */
@@ -129,10 +160,34 @@ export const injectWebStyles = () => {
         font-size: 14px;
       }
       
-      /* Reduce margins on mobile */
+      /* Ensure content doesn't get hidden behind mobile UI */
+      .mobile-safe-area {
+        padding-bottom: env(safe-area-inset-bottom, 20px);
+        padding-bottom: max(env(safe-area-inset-bottom), 20px);
+      }
+      
+      /* Better spacing for mobile */
       .mobile-optimized {
         padding: 12px !important;
         margin: 8px !important;
+      }
+      
+      /* Ensure buttons are always visible */
+      .mobile-button-container {
+        position: sticky;
+        bottom: 0;
+        background: linear-gradient(transparent, rgba(255,255,255,0.9) 50%);
+        padding-top: 20px;
+        padding-bottom: env(safe-area-inset-bottom, 20px);
+        z-index: 10;
+      }
+    }
+    
+    /* Handle iOS Safari specific issues */
+    @media screen and (max-width: ${breakpoints.mobile}px) and (-webkit-min-device-pixel-ratio: 2) {
+      body {
+        /* Fix for iOS Safari address bar */
+        min-height: -webkit-fill-available;
       }
     }
   `;

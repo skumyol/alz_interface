@@ -7,12 +7,14 @@ import { DataProvider } from './src/contexts/DataContext';
 import { LanguageProvider } from './src/contexts/LanguageContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { injectWebStyles } from './src/theme/webStyles';
+import { applyMobileViewportFixes } from './src/utils/mobileViewport';
 
 export default function App() {
   useEffect(() => {
     // Inject web-specific styles for better mobile experience
     if (Platform.OS === 'web') {
       injectWebStyles();
+      applyMobileViewportFixes();
     }
   }, []);
 

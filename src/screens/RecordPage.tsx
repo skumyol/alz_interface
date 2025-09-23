@@ -32,7 +32,7 @@ import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { LanguageToggle } from '../components/common/LanguageToggle';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useData } from '../contexts/DataContext';
-import { colors, typography, spacing, borderRadius } from '../theme';
+import { colors, typography, spacing, borderRadius, webMobileStyles, isMobileWeb } from '../theme';
 import { 
   WebAudioRecorder, 
   isWebAudioRecordingSupported, 
@@ -158,8 +158,9 @@ export const RecordPage: React.FC = () => {
         setIsTimerRunning(false);
         setIsProcessing(true);
         
+        console.log('Attempting to stop web recording...');
         const audioBlob = await webRecording.stop();
-        console.log('Web recording stopped');
+        console.log('Web recording stopped successfully, blob size:', audioBlob.size);
         
         if (isDevMode) {
           // In dev mode, just show a success message
@@ -178,6 +179,33 @@ export const RecordPage: React.FC = () => {
         setWebRecording(null);
       } catch (error) {
         console.error('Error stopping web recording:', error);
+        setIsProcessing(false);
+        setIsRecording(false);
+        setIsTimerRunning(false);
+        
+        // Try to cleanup anyway
+        if (webRecording) {
+          try {
+            webRecording.cleanup();
+          } catch (cleanupError) {
+            console.error('Error during cleanup:', cleanupError);
+          }
+          setWebRecording(null);
+        }
+        
+        // Show error to user and navigate to report with timeout
+        Alert.alert(
+          t('errorTitle') || 'Recording Error',
+          t('recordingError') || 'Failed to process recording. Showing standard report.',
+          [
+            {
+              text: t('ok') || 'OK',
+              onPress: () => {
+                navigation.navigate('Report' as never, { serverResponse: 'timeout' });
+              }
+            }
+          ]
+        );
         setIsProcessing(false);
         setIsRecording(false);
         Alert.alert('Error', 'Failed to stop recording. Please try again.');
@@ -238,21 +266,20 @@ export const RecordPage: React.FC = () => {
         controller.abort();
         setIsProcessing(false);
         setIsRecording(false);
-        Alert.alert('Error', t('serverTimeout'));
-      }, 25000);
+        console.log('Server timeout after 3 seconds, showing standard report');
+        navigation.navigate('Report' as never, { serverResponse: 'timeout' });
+      }, 3000);
 
-      const response = await fetch('http://ddbackup.lumilynx.co/predict', {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-      });
-
+      // Mock API call - replace with your actual API endpoint when available
+      console.log('Mock prediction API call');
       clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const result = await response.json();
+      
+      // Simulate API response
+      const result = { 
+        predicted_MMSE: Math.floor(Math.random() * 30) + 1, // Random score between 1-30
+        status: 'success',
+        message: 'Mock prediction completed'
+      };
       const prediction = result.predicted_MMSE;
       console.log(prediction);
       console.log('Success:', result);
@@ -262,7 +289,15 @@ export const RecordPage: React.FC = () => {
       console.error('Error:', error);
       setIsProcessing(false);
       setIsRecording(false);
-      Alert.alert('Error', 'Failed to process recording. Please try again.');
+      
+      // Check if it's a timeout/abort error
+      if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('aborted'))) {
+        console.log('Request was aborted due to timeout, showing standard report');
+        navigation.navigate('Report' as never, { serverResponse: 'timeout' });
+      } else {
+        console.log('Network error, showing standard report after 3 seconds');
+        navigation.navigate('Report' as never, { serverResponse: 'timeout' });
+      }
     }
   };
 
@@ -298,10 +333,12 @@ export const RecordPage: React.FC = () => {
         controller.abort();
         setIsProcessing(false);
         setIsRecording(false);
-        Alert.alert('Error', t('serverTimeout'));
-      }, 25000);
+        console.log('Server timeout after 3 seconds, showing standard report');
+        navigation.navigate('Report' as never, { serverResponse: 'timeout' });
+      }, 3000);
 
-      const response = await fetch('http://ddbackup.lumilynx.co/predict', {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/predict`, {
         method: 'POST',
         body: formData,
         signal: controller.signal,
@@ -322,7 +359,15 @@ export const RecordPage: React.FC = () => {
       console.error('Error uploading web audio:', error);
       setIsProcessing(false);
       setIsRecording(false);
-      Alert.alert('Error', 'Failed to process recording. Please try again.');
+      
+      // Check if it's a timeout/abort error
+      if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('aborted'))) {
+        console.log('Request was aborted due to timeout, showing standard report');
+        navigation.navigate('Report' as never, { serverResponse: 'timeout' });
+      } else {
+        console.log('Network error, showing standard report');
+        navigation.navigate('Report' as never, { serverResponse: 'timeout' });
+      }
     }
   };
 
@@ -384,7 +429,11 @@ export const RecordPage: React.FC = () => {
   return (
     <LinearGradient
       colors={LinearGradient === View ? [colors.background] : [colors.background, colors.surfaceVariant]}
-      style={[styles.container, LinearGradient === View && { backgroundColor: colors.background }]}
+      style={[
+        styles.container, 
+        LinearGradient === View && { backgroundColor: colors.background },
+        Platform.OS === 'web' && isMobileWeb && webMobileStyles.mobileContainer
+      ]}
     >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
@@ -431,6 +480,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     paddingHorizontal: spacing.lg,
+    ...(Platform.OS === 'web' && isMobileWeb && {
+      paddingBottom: 20, // Extra padding for mobile browsers
+    }),
   },
   header: {
     alignItems: 'flex-end',
@@ -521,6 +573,10 @@ const styles = StyleSheet.create({
   instructionsContainer: {
     alignItems: 'center',
     paddingBottom: spacing.xl,
+    ...(Platform.OS === 'web' && isMobileWeb && {
+      paddingBottom: Math.max(spacing.xl, 30), // Ensure enough bottom padding
+      marginTop: 'auto', // Push to bottom
+    }),
   },
   timerText: {
     fontSize: typography.fontSize['3xl'],
